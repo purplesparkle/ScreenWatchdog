@@ -89,7 +89,7 @@ class SelectAreaFrame(wx.Frame):
         self.EnableMaximizeButton(False)
         self.EnableMinimizeButton(False)
         if self.CanSetTransparent():
-            self.SetTransparent(100)
+            self.SetTransparent(180)
         self.Center()
         self.Show()
 
