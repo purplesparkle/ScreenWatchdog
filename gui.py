@@ -105,7 +105,11 @@ class ScreenWatchdogFrame(wx.Frame, ScreenAreaWatchdogListener):
         self.shots = 0
         self.disturb = False
         self.watchdog = ScreenAreaWatchdog(EventScreenAreaWatchdogListener(self))
-        self.watchdog.rate = 2.0
+        self.watchdog.rate = 1.0
+        self.triggered = False
+        self.green = wx.Colour(0,255,0)
+        self.red = wx.Colour(255,0,0)
+        self.color = None
         panel = wx.Panel(self)
         self.btn_select_area = wx.Button(panel)
         self.btn_select_area.SetLabel('Select area')
@@ -147,7 +151,9 @@ class ScreenWatchdogFrame(wx.Frame, ScreenAreaWatchdogListener):
 
     def on_area_changed(self, identifier: int):
         self.SetStatusText('Area changed')
-        self.SetBackgroundColour(wx.Colour(255,0,0))
+        self.triggered = True
+        self.color = self.red
+        self.SetBackgroundColour(self.color)
         self.btn_reset_area.Show()
         if self.disturb:
             self.RequestUserAttention()
@@ -159,17 +165,27 @@ class ScreenWatchdogFrame(wx.Frame, ScreenAreaWatchdogListener):
 
     def on_area_set(self, identifier: int, area: tuple):
         self.watchdog.start()
-        self.SetBackgroundColour(wx.Colour(0,255,0))
+        self.color = self.green
+        self.SetBackgroundColour(self.color)
         self.SetStatusText('Area selected: ' + str(self.watchdog.bbox))
 
     def area_reset(self, msg):
         self.on_area_reset(msg.identifier)
+        self.triggered = False
+        self.color = self.green
+        self.SetBackgroundColour(self.color)
 
     def on_area_reset(self, identifier: int):
         self.SetStatusText('Area reset, ready to detect change')
         self.SetBackgroundColour(wx.Colour(0,255,0))
 
     def screenshot(self,msg):
+        if self.triggered:
+            if self.color == self.red:
+                self.color = self.green
+            else:
+                self.color = self.red
+        self.SetBackgroundColour(self.color)
         self.on_screenshot(msg.identifier)
 
     def on_screenshot(self, identifier: int):
