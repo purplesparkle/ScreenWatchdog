@@ -1,0 +1,4 @@
+#!/bin/bash
+source bin/activate
+git pull
+pip install -U -r requirements.txt
