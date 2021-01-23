@@ -75,7 +75,7 @@ class ChooseArea(QWidget):
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
         self.setWindowTitle("Choose Area")
-        self.setWindowOpacity(0.1)
+        self.setWindowOpacity(0.5)
         
 
 class MainWindow(QWidget):
@@ -112,7 +112,6 @@ class MainWindow(QWidget):
         self.btn_reset = QPushButton("Reset")
         self.btn_reset.hide()
 
-        # signals connections
         self.btn_choose_area.clicked.connect(self.choose_area)
         self.btn_reset.clicked.connect(self.reset)
 
