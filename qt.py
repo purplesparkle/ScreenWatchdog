@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QLabel,
-                            QGridLayout, QFileDialog)
+                            QGridLayout, QFileDialog, QDesktopWidget)
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QTimer, QThread
 from PyQt5.QtCore import pyqtSignal
@@ -41,6 +41,43 @@ class ScreenWatcher(QThread):
                 self.changed_signal.emit()
             sleep(self.rate)
 
+class ChooseArea(QWidget):
+    choose_signal = pyqtSignal(int, int, int, int)
+
+    def __init__(self):
+        super().__init__()
+        self.setObjectName("ChooseArea")
+        self.settings()
+        self.create_widgets()
+        self.set_layout()
+
+    def closeEvent(self, event):
+        self.choose()
+        event.accept()
+
+    def choose(self):
+        self.hide()
+        self.choose_signal.emit(self.x(), self.y(), self.width(), self.height())
+
+    def set_layout(self):
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(self.btn_choose_area, 0,0, alignment=Qt.AlignCenter)
+        self.setLayout(self.layout)
+
+    def create_widgets(self):
+        self.btn_choose_area = QPushButton("Choose Area")
+        self.btn_choose_area.clicked.connect(self.close)
+
+    def settings(self):
+        self.resize(370, 270)
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+        self.setWindowTitle("Choose Area")
+        self.setWindowOpacity(0.1)
+        
+
 class MainWindow(QWidget):
     reset_signal = pyqtSignal()
 
@@ -56,9 +93,14 @@ class MainWindow(QWidget):
         self.changed = False
         self.screenWatcher: ScreenWatcher = None
         self.is_red = False
+        self.green()
 
     def settings(self):
         self.resize(370, 270)
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
         self.setWindowTitle("QScreenWatchdog")
         
     def create_widgets(self):
@@ -68,6 +110,7 @@ class MainWindow(QWidget):
         self.img_preview.hide()
         self.btn_choose_area = QPushButton("Choose Area")
         self.btn_reset = QPushButton("Reset")
+        self.btn_reset.hide()
 
         # signals connections
         self.btn_choose_area.clicked.connect(self.choose_area)
@@ -81,12 +124,10 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
 
     def choose_area(self):
-        self.set_screenwatcher((0,0,500,200))
-        self.screenWatcher.screenshot_signal.connect(self.on_screenshot)
-        self.screenWatcher.changed_signal.connect(self.on_changed)
-        self.start_screenwatcher()
-        self.btn_choose_area.hide()
-        self.btn_reset.show()
+        self.chooseWindow = ChooseArea()
+        self.chooseWindow.choose_signal.connect(self.on_area_set)
+        self.hide()
+        self.chooseWindow.show()
 
     def take_screenshot(self):
         #self.preview_screen = QApplication.primaryScreen().grabWindow(0)
@@ -98,11 +139,22 @@ class MainWindow(QWidget):
     def reset(self):
         self.changed = False
         self.green()
+        self.btn_reset.hide()
 
+    def on_area_set(self, x, y, width, height):
+        self.set_screenwatcher((x,y,width,height))
+        self.screenWatcher.screenshot_signal.connect(self.on_screenshot)
+        self.screenWatcher.changed_signal.connect(self.on_changed)
+        self.start_screenwatcher()
+        self.btn_choose_area.hide()
+        self.chooseWindow = None
+        self.show()
+        
     def on_changed(self):
         self.changed = True
-        self.is_red = False
-        self.green()
+        self.is_red = True
+        self.red()
+        self.btn_reset.show()
 
     def on_screenshot(self):
         if self.changed and not self.is_red:
