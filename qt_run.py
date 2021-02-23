@@ -84,13 +84,6 @@ class MainWindow(QWidget):
         self.layout.addWidget(self.btn_reset, 2, 0, alignment=Qt.AlignCenter)
         self.setLayout(self.layout)
 
-    def take_screenshot(self):
-        #self.preview_screen = QApplication.primaryScreen().grabWindow(0)
-        self.preview_screen = QApplication.primaryScreen().grabWindow(QApplication.desktop().winId(), 0, 0, 500, 500)
-        self.img_preview.setPixmap(self.preview_screen.scaled(350,350,
-                                    Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.show()
-
     def reset(self):
         self.changed = False
         self.green()
